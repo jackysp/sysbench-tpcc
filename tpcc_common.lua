@@ -199,7 +199,8 @@ function create_tables(drv, con, table_num)
 	c_payment_cnt smallint, 
 	c_delivery_cnt smallint, 
 	c_data text,
-	PRIMARY KEY(c_w_id, c_d_id, c_id)
+	PRIMARY KEY(c_w_id, c_d_id, c_id),
+	KEY(c_w_id,c_d_id,c_last,c_first)
 	) %s %s]],
       table_num, engine_def, extra_table_options)
 
@@ -216,7 +217,9 @@ function create_tables(drv, con, table_num)
 	h_w_id smallint,
 	h_date ]] .. datetime_type .. [[,
 	h_amount decimal(6,2), 
-	h_data varchar(24)
+	h_data varchar(24),
+	KEY(h_c_w_id,h_c_d_id,h_c_id),
+	KEY(h_w_id,h_d_id )
 	) %s %s]],
       table_num, engine_def, extra_table_options)
 
@@ -232,7 +235,8 @@ function create_tables(drv, con, table_num)
 	o_carrier_id ]] .. tinyint_type .. [[,
 	o_ol_cnt ]] .. tinyint_type .. [[, 
 	o_all_local ]] .. tinyint_type .. [[,
-	PRIMARY KEY(o_w_id, o_d_id, o_id) 
+	PRIMARY KEY(o_w_id, o_d_id, o_id),
+	KEY(o_w_id,o_d_id,o_c_id,o_id)
 	) %s %s]],
       table_num, engine_def, extra_table_options)
 
@@ -263,7 +267,8 @@ function create_tables(drv, con, table_num)
 	ol_quantity ]] .. tinyint_type .. [[, 
 	ol_amount decimal(6,2), 
 	ol_dist_info char(24),
-	PRIMARY KEY(ol_w_id, ol_d_id, ol_o_id, ol_number)
+	PRIMARY KEY(ol_w_id, ol_d_id, ol_o_id, ol_number),
+	KEY(ol_supply_w_id,ol_i_id)
 	) %s %s]],
       table_num, engine_def, extra_table_options)
 
@@ -290,7 +295,8 @@ function create_tables(drv, con, table_num)
 	s_order_cnt smallint, 
 	s_remote_cnt smallint,
 	s_data varchar(50),
-	PRIMARY KEY(s_w_id, s_i_id)
+	PRIMARY KEY(s_w_id, s_i_id),
+	KEY(s_i_id)
 	) %s %s]],
       table_num, engine_def, extra_table_options)
 
@@ -326,13 +332,6 @@ function create_tables(drv, con, table_num)
    end
    con:bulk_insert_done()
 
-    print(string.format("Adding indexes %d ... \n", i))
-    con:query("CREATE INDEX idx_customer"..i.." ON customer"..i.." (c_w_id,c_d_id,c_last,c_first)")
-    con:query("CREATE INDEX idx_orders"..i.." ON orders"..i.." (o_w_id,o_d_id,o_c_id,o_id)")
-    con:query("CREATE INDEX fkey_stock_2"..i.." ON stock"..i.." (s_i_id)")
-    con:query("CREATE INDEX fkey_order_line_2"..i.." ON order_line"..i.." (ol_supply_w_id,ol_i_id)")
-    con:query("CREATE INDEX fkey_history_1"..i.." ON history"..i.." (h_c_w_id,h_c_d_id,h_c_id)")
-    con:query("CREATE INDEX fkey_history_2"..i.." ON history"..i.." (h_w_id,h_d_id )")
     if sysbench.opt.use_fk == 1 then
         print(string.format("Adding FK %d ... \n", i))
         con:query("ALTER TABLE new_orders"..i.." ADD CONSTRAINT fkey_new_orders_1_"..table_num.." FOREIGN KEY(no_w_id,no_d_id,no_o_id) REFERENCES orders"..i.."(o_w_id,o_d_id,o_id)")
